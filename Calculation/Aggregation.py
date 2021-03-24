@@ -21,15 +21,9 @@ def create_excel_file(data_frames, sheet_names=None):
     writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
     df: pd.DataFrame
     for df, sheet_name in zip(data_frames, sheet_names):
-        # for col in df.columns:
-        #    if pd.core.dtypes.common.is_datetime64tz_dtype(df[col]):
-        #        df[col] = df[col].dt.tz_localize(None)
         df.to_excel(writer, sheet_name=sheet_name, merge_cells=True, freeze_panes=(1, 1))
         money_fmt = writer.book.add_format({'num_format': '#,##0.00'})
         worksheet: xlsxwriter.worksheet.Worksheet = writer.sheets[sheet_name]
-        # for i, col in enumerate(df.columns):
-        #    if not pd.core.dtypes.common.is_datetime64tz_dtype(df[col]):
-        #        worksheet.set_column(i + 1, i + 2, cell_format=money_fmt)
 
     writer.save()
     writer.close()
@@ -58,11 +52,14 @@ class Aggregation(DependencyAnalysisMixin, CalculatedModelMixin, Model):
             return list(EmailInput.objects.filter(period=self.period).values_list('name', flat=True).distinct())
 
     def calculate(self):
-        email_ids = list(EmailInput.objects.filter(period=self.period, name=self.name).values_list('id', flat=True))
-        data_sum = DataInput.objects.filter(period=self.period, id__in=email_ids).aggregate(Sum('data'))['data__sum']
+        email_ids = list(
+            EmailInput.objects.filter(period=self.period, name=self.name).values_list('email_id', flat=True))
+        data_sum = DataInput.objects.filter(period=self.period, data_id__in=email_ids).aggregate(Sum('data'))[
+            'data__sum']
         self.value = data_sum
 
-        data_frame = pd.DataFrame.from_records(DataInput.objects.filter(period=self.period, id__in=email_ids).values())
+        data_frame = pd.DataFrame.from_records(
+            DataInput.objects.filter(period=self.period, data_id__in=email_ids).values())
         excel = create_excel_file(data_frames=[data_frame], sheet_names=['FilteredDataInput'])
         date_string = datetime.now().strftime("%Y-%m-%d_%H-%M.%S")
         self.file_to_send.save(f'{self.name}_DatInput_{date_string}.xlsx', content=File(excel))

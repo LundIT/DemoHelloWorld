@@ -17,7 +17,6 @@ class InitialTest(TestCase):
         path = path + "/../UploadFiles/"
 
         Period.objects.all().delete()
-        Aggregation.objects.all().delete()
         self.period = Period(name="Test Period", date=datetime(year=2020, month=12, day=31))
         self.period.save()
 

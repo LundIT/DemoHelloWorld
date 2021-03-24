@@ -15,6 +15,6 @@ class DataUpload(UploadModelMixin):
     def update(self):
         input_data = pd.read_excel(self.data_file)
         for index, row in input_data.iterrows():
-            data_input = DataInput(id=row['id'], period=self.period, data=row['data'])
+            data_input = DataInput(data_id=row['id'], period=self.period, data=row['data'])
             data_input.save()
         Aggregation.create(period=[self.period])
